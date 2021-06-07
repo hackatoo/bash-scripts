@@ -1,0 +1,19 @@
+#This script allows you to parse specific fields (number or login, amount of request per 1 login) from cdr files, paste them together with delimiter';' and then load file as CSV into mysql database.
+
+#!/bin/bash 
+DB_USER=monit
+DB_PASSWD= 
+
+DB_NAME=count
+TABLE=counter
+
+grep '^'"$(date +"%F %R")" /usr/protei/cdr/common_20210319.cdr | awk -v date="$(date +"%F %R")" -F ";" '{print date",", $14","}'| sort | uniq  >> /usr/protei/cdr/log2.txt #number 
+
+grep '^'"$(date +"%F %R")" /usr/protei/cdr/common_20210319.cdr | awk -F ";" '{print $14}' | sort | uniq -c | awk '{print $1}' >> /usr/protei/cdr/log3.txt #amount
+
+paste log2.txt log3.txt | column -s $'\t' -t | tr -s ' ' ' ' >> /usr/protei/cdr/log.txt
+
+mysql --user=$DB_USER --password=$DB_PASSWD $DB_NAME -e "LOAD DATA INFILE '/usr/protei/cdr/log.txt' INTO TABLE counter FIELDS TERMINATED BY ','; "
+sleep 2s
+rm log*
+exit
