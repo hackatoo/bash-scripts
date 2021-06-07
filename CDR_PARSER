@@ -7,9 +7,9 @@ DB_PASSWD=
 DB_NAME=count
 TABLE=counter
 
-grep '^'"$(date +"%F %R")" /usr/protei/cdr/common_20210319.cdr | awk -v date="$(date +"%F %R")" -F ";" '{print date",", $14","}'| sort | uniq  >> /usr/protei/cdr/log2.txt #number 
+grep '^'"$(date +"%F %R")" /usr/logs/cdr/somecdr.cdr | awk -v date="$(date +"%F %R")" -F ";" '{print date",", $14","}'| sort | uniq  >> /usr/logs/cdr/log2.txt #number 
 
-grep '^'"$(date +"%F %R")" /usr/protei/cdr/common_20210319.cdr | awk -F ";" '{print $14}' | sort | uniq -c | awk '{print $1}' >> /usr/protei/cdr/log3.txt #amount
+grep '^'"$(date +"%F %R")" /usr/logs/cdr/somecdr.cdr | awk -F ";" '{print $14}' | sort | uniq -c | awk '{print $1}' >> /usr/logs/cdr/log3.txt #amount
 
 paste log2.txt log3.txt | column -s $'\t' -t | tr -s ' ' ' ' >> /usr/protei/cdr/log.txt
 
