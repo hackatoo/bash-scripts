@@ -1,0 +1,44 @@
+#This script parses statistics for one user login for the previous day with request in CH db in CSV output format, split files in 2 if the number of rows is more than 500k, importing CSV to XLSX.
+
+#!/bin/bash -xv
+yesterday_date=$(date -d "yesterday" '+%Y-%m-%d')
+login_file=$(clickhouse-client -h 127.0.0.1 --database=statistics -q "select distinct login from http_sms_cdr into outfile '_login' format CSV")
+login=( $(awk -F ";" '{print $1}' _login | paste -s -d" " | tr -d '"') )
+date_suf=$yesterday_date"_"
+csv_temp=$yesterday_date".csv"
+
+for i in "${login[@]}"
+do
+if [ ! -d "/opt/customer/$i" ]; then
+mkdir /opt/customer/$i
+fi
+clickhouse-client -h 127.0.0.1 --database=statistics -q "SELECT date_time,       
+login,      
+cgpn,      
+cdpn,      
+dictGetString('SMPP_ErrorCodes','Description', toUInt64(msg_command_status))||' ('||toString(msg_command_status)||')' as err_description,      
+msg_id,       
+msg_parts,      
+ unhex(text) as Text FROM statistics.http_sms_cdr
+ where toDate(date_time)='$yesterday_date' and login='$i'
+order by date_time asc into outfile '/opt/customer/$i/$yesterday_date.csv' FORMAT CSV";
+
+date_suf=$yesterday_date"_"
+csv_temp=$yesterday_date".csv"
+temp_cnt=$(cat /opt/customer/$i/$csv_temp | wc -l)
+
+if [[ $temp_cnt -gt 1000000 ]]; then
+        split -l 500000 -d -a2 --additional-suffix=.csv /opt/customer/$i/$csv_temp /opt/customer/$i/$date_suf
+        rm -f /opt/customer/$i/$csv_temp
+elif [[ $temp_cnt -eq 0 ]]; then
+        rm -f /opt/customer/$i/$csv_temp
+fi
+cd /opt/customer/$i
+
+for file in *.csv ; do
+        csv2xlslx --colsep ";" --infile $file --outdir /opt/customer/$i/
+done
+
+rm -f /opt/customer/$i/*.csv 
+
+done
