@@ -13,7 +13,7 @@ grep '^'"$(date +"%F %R")" /usr/logs/cdr/somecdr.cdr | awk -F ";" '{print $14}' 
 
 paste log2.txt log3.txt | column -s $'\t' -t | tr -s ' ' ' ' >> /usr/protei/cdr/log.txt
 
-mysql --user=$DB_USER --password=$DB_PASSWD $DB_NAME -e "LOAD DATA INFILE '/usr/protei/cdr/log.txt' INTO TABLE counter FIELDS TERMINATED BY ','; "
+mysql --user=$DB_USER --password=$DB_PASSWD $DB_NAME -e "LOAD DATA INFILE '/usr/gwk-01/cdr/log.txt' INTO TABLE counter FIELDS TERMINATED BY ','; "
 sleep 2s
 rm log*
 exit
